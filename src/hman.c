@@ -12,7 +12,8 @@
 #include "hman.h"
 
 #define WORD_L "./res/vcwords.txt"
-#define BUF_SZ 64
+#define DEFN_L "./res/vcdefns.txt"
+#define BUF_SZ 128
 #define DEBUG 0
 #define GUESS_LIM 12
 
@@ -45,7 +46,7 @@ int rand_int(const int min, const int max)
 	return rand() % (max - min + 1) + min;
 }
 
-void gen_rnd_word(char word[])
+void gen_rnd_word(char word[], int *ln)
 {
 	FILE *f;
 	int i, ptr, count, rnd;
@@ -77,6 +78,10 @@ void gen_rnd_word(char word[])
 	 * Generate a random number.
 	 */
 	rnd = rand_int(0, count);
+	*ln = rnd;
+
+	// printf("%d\n", rnd);
+	// printf("%d\n", *ln);
 
 	// printf("Count: %d\n", count);
 	// printf("Rand:  %d\n", rnd);
@@ -107,13 +112,54 @@ void gen_rnd_word(char word[])
 	fclose(f);
 }
 
+void find_defn(char defn[], int ln)
+{
+	FILE *f;
+	int i = 0;
+
+	/*
+	 * Open a stream to read.
+	 */
+	f = fopen(DEFN_L, "r");
+	if (f == NULL)
+	{
+		printf("Wordlist definitions (path: %s) is missing!\n", DEFN_L);
+		exit(EXIT_FAILURE);
+	}
+
+	/*
+	 * Finds the definition.
+	 */
+	while (fgets(defn, BUF_SZ, f))
+	{
+		++i;
+		if (i != ln)
+		{
+			continue;
+		}
+		for (i = 0; i < strlen(defn); i++)
+		{
+			if (defn[i] == '\n')
+			{
+				defn[i] = 0;
+			}
+		}
+		if (DEBUG)
+		{
+			printf("Definition: %s.\n", defn);
+		}
+		break;
+	}
+	fclose(f);
+}
+
 /*
  * Start the program.
  */
 int main(int argc, char *argv[])
 {
-	int i, ptr, bl_ptr;
-	char line[BUF_SZ], usr_table[BUF_SZ], input[BUF_SZ], bad_letters[sizeof(alphabet)], c;
+	int i, ptr, bl_ptr, ln;
+	char line[BUF_SZ], defn[BUF_SZ], usr_table[BUF_SZ], input[BUF_SZ], bad_letters[sizeof(alphabet)], c;
 
 	c = 0;
 	bl_ptr = 0;
@@ -130,7 +176,12 @@ int main(int argc, char *argv[])
 	/*
 	 * Generate the word. :D
 	 */
-	gen_rnd_word(line);
+	gen_rnd_word(line, &ln);
+
+	/*
+	 * Find the definition.
+	 */
+	find_defn(defn, ln);
 
 	/*
 	 * Incase there's a bug (like srsly wtf).
@@ -236,6 +287,8 @@ int main(int argc, char *argv[])
 						{
 							printf("You ran out of bad guesses!\n");
 							print_hman(1);
+							printf("The word was %s.\n", line);
+							printf("(defn: %s)\n", defn);
 							printf("You lose the game (and the man's life)! :(\n");
 							return EXIT_SUCCESS;
 						}
@@ -258,7 +311,8 @@ int main(int argc, char *argv[])
 		{
 			printf("Congratulations, you win (and saved the man's life)!\n");
 			print_hman(0);
-			printf("The word was indeed %s!\n", line);
+			printf("The word was %s.\n", line);
+			printf("(defn: %s)\n", defn);
 			printf("Total bad (incorrect) guesses: %d.\n", bl_ptr);
 			break;
 		}
