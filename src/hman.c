@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include <time.h>
  
 #include "hman.h"
@@ -17,15 +18,15 @@
 #define DEBUG 0
 #define GUESS_LIM 12
 
-#define DEAD_FACE "(X_X)"
-#define ALIVE_FACE "(*_*)"
+#define DEAD_FACE "(x_x)"
+#define ALIVE_FACE "(o_o)"
 #define TORSO " -|- "
 #define LEGS " / \\ "
 
 void print_hman(int dead)
 {
-	printf(dead ? DEAD_FACE : ALIVE_FACE);
-	printf("\n" TORSO "\n" LEGS "\n");
+	printf("%s\n%s\n", dead ? DEAD_FACE : ALIVE_FACE, TORSO "\n" LEGS);
+	// printf("\n" TORSO "\n" LEGS "\n");
 }
 
 int is_al(char c)
@@ -35,10 +36,10 @@ int is_al(char c)
 	{
 		if (alphabet[i] == c)
 		{
-			return 1;
+			return true;
 		}
 	}
-	return 0;
+	return false;
 }
 
 int rand_int(const int min, const int max)
@@ -46,14 +47,10 @@ int rand_int(const int min, const int max)
 	return rand() % (max - min + 1) + min;
 }
 
-void gen_rnd_word(char word[], int *ln)
+void gen_rnd_word(char *word, int *ln)
 {
 	FILE *f;
-	int i, ptr, count, rnd;
-
-	ptr = 0;
-	count = 0;
-	rnd = 0;
+	int i = 0, ptr = 0, count = 0, rnd = 0;
 
 	/*
 	 * Open a stream to read.
@@ -112,7 +109,7 @@ void gen_rnd_word(char word[], int *ln)
 	fclose(f);
 }
 
-void find_defn(char defn[], int ln)
+void find_defn(char *defn, int ln)
 {
 	FILE *f;
 	int i = 0;
@@ -158,15 +155,13 @@ void find_defn(char defn[], int ln)
  */
 int main(int argc, char *argv[])
 {
-	int i, ptr, bl_ptr, ln;
+	int i = 0, ptr = 0, bl_ptr = 0, ln = 0;
 	char line[BUF_SZ], defn[BUF_SZ], usr_table[BUF_SZ], input[BUF_SZ], bad_letters[sizeof(alphabet)], c;
 
 	c = 0;
-	bl_ptr = 0;
 	srand(time(NULL));
 
-	printf("Welcome to Terminal Hangman!\n");
-	printf("Loading wordlist...\n");
+	printf("Welcome to Terminal Hangman!\nLoading wordlist...\n");
 
 	memset(line, 0, sizeof(line));
 	memset(usr_table, 0, sizeof(usr_table));
@@ -221,7 +216,6 @@ int main(int argc, char *argv[])
 	/*
 	 * Begin guessing!
 	 */
-	ptr = 0;
 	while (1)
 	{
 		printf("%s\n", usr_table);
@@ -273,8 +267,7 @@ int main(int argc, char *argv[])
 					if (!already_guessed)
 					{
 						bad_letters[bl_ptr++] = guess;
-						printf("Nope! :S (bad guesses: %d)\n", bl_ptr);
-						printf("Bad Letters: ");
+						printf("Nope! :S (bad guesses: %d)\nBad Letters: ", bl_ptr);
 						for (i = 0; i < sizeof(bad_letters); i++)
 						{
 							if (bad_letters[i] != 0)
@@ -287,8 +280,7 @@ int main(int argc, char *argv[])
 						{
 							printf("You ran out of bad guesses!\n");
 							print_hman(1);
-							printf("The word was %s.\n", line);
-							printf("(defn: %s)\n", defn);
+							printf("The word was %s.\n(defn: %s)\n", line, defn);
 							printf("You lose the game (and the man's life)! :(\n");
 							return EXIT_SUCCESS;
 						}
@@ -312,8 +304,11 @@ int main(int argc, char *argv[])
 			printf("Congratulations, you win (and saved the man's life)!\n");
 			print_hman(0);
 			printf("The word was %s.\n", line);
-			printf("(defn: %s)\n", defn);
-			printf("Total bad (incorrect) guesses: %d.\n", bl_ptr);
+			if (strncmp(line, input, BUF_SZ) == 0)
+			{
+				printf("You guessed the entire word, impressive...\n");
+			}
+			printf("(defn: %s)\nTotal bad (incorrect) guesses: %d.\n", defn, bl_ptr);
 			break;
 		}
 		memset(input, 0, sizeof(input));

@@ -35,10 +35,10 @@ int rand_int(const int min, const int max);
  * Generate a random word and stores
  * it in the word[] argument (a string).
  */
-void gen_rnd_word(char word[], int *ln);
+void gen_rnd_word(char *word, int *ln);
 
 /*
  * Finds the definition for a particular
  * word in a file according to line number.
  */
-void find_defn(char defn[], int ln);
+void find_defn(char *defn, int ln);
